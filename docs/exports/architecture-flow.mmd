@@ -1,0 +1,17 @@
+flowchart LR
+  subgraph Factory_Floor[Factory Floor]
+    ST1[RFID Station\nESP32 + MFRC522\nLCD/Touch/RGB/Buzzer]
+  end
+
+  subgraph LAN_or_Server[LAN / Server]
+    API[Backend API\nNode/Express\n/api/v1]
+    DB[(Postgres DB)]
+  end
+
+  subgraph Admin[Admin / Ops]
+    UI[Admin UI\nMapping + Monitoring]
+  end
+
+  ST1 -- Wi‑Fi / HTTP(S) --> API
+  UI -- HTTPS --> API
+  API -- SQL --> DB

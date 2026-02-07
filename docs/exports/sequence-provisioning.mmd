@@ -1,0 +1,15 @@
+sequenceDiagram
+  participant Station as ESP32 Station
+  participant API as Backend API
+  participant Admin as Admin UI
+  participant DB as Postgres
+
+  Station->>API: POST /stations/claim (factory_code, mac, fw)
+  API->>DB: upsert station by mac
+  DB-->>API: station record
+  API-->>Station: token + config
+
+  Admin->>API: PATCH /admin/stations/:id/map (station_id, line, type)
+  API->>DB: save mapping (unique per factory)
+  DB-->>API: ok
+  API-->>Admin: mapped

@@ -1,0 +1,14 @@
+sequenceDiagram
+  participant Station as ESP32 Station
+  participant API as Backend API
+  participant DB as Postgres
+
+  Station->>Station: MFRC522 reads UID
+  Station->>API: POST /events (Bearer token, event_id, rfid_uid)
+  API->>DB: validate station mapping
+  API->>DB: find bundle by rfid_uid
+  API->>DB: insert event (idempotent)
+  API->>DB: update bundle status
+  DB-->>API: ok
+  API-->>Station: 200 OK
+  Station->>Station: beep/LED success
