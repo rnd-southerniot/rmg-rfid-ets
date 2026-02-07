@@ -1,81 +1,70 @@
-# RMG RFID ETS/PTS — Next Steps Plan (2026-02-06)
+# RMG RFID ETS — Next Steps Plan (updated 2026-02-07)
 
-This is a practical, build-next plan for getting the factory/RFID MVP into a pilot-ready state.
+This is the working plan to take the ETS MVP from “works locally” to “pilot-ready in a factory line”.
 
-## Current state (what already exists)
-- Postgres schema + migration: `db/migrations/001_init.sql`
-- Node/Express API skeleton:
-  - `POST /api/v1/stations/claim` (creates/updates station by MAC, issues token)
-  - `POST /api/v1/bundles` (requires `factory_code`, creates bundle + assigns RFID)
-  - `POST /api/v1/events` (station-token auth; rejects unmapped station; idempotent by `(station_id,event_id)`; updates bundle state)
-- Minimal acceptance tests in `test/api.test.ts`
+## Current state (what exists now)
+Backend repo: `rnd-southerniot/rmg-rfid-ets`
 
-## The 3 MVP goals (pilot line)
-1) **Provision + map stations** fast (MAC list → station_id + line + type).
-2) **Create bundles + assign RFID** reliably (no duplicates; traceable).
-3) **Ingest scans** reliably with great operator feedback (accepted vs unmapped vs unknown tag).
+- Backend: Node/Express + Postgres; API base `/api/v1`
+- Core station flow:
+  - `POST /stations/claim` → station token
+  - `POST /events` (Bearer station token) → idempotent ingest
+  - `POST /bundles` → create + assign RFID
+- Admin/Ops endpoints added for mapping + debugging:
+  - `src/routes/admin.ts`
+  - `src/routes/stationStatus.ts`
+  - `src/routes/adminEvents.ts`
+- Local ops: docker compose, seeds, simulation scripts
+- CEO docs + diagrams exported to PNG/SVG/PDF under `docs/`
 
-## Decisions needed from you (to lock scope)
-Answer these and I’ll reflect them into `spec/SPEC.md`:
-1) MVP operator identity: **none** (keep simple) OR **badge/PIN** now?
-2) Sewing stations per line estimate (for mapping UI scale): ~__ ?
-3) QC Fail flow: just mark `qc_fail` OR introduce `rework_*` events in MVP?
-4) LoRaWAN fallback in pilot: **off** (Wi‑Fi only) OR **best-effort proof** on pilot?
+> Note: Firmware lives in `projects/rmg-rfid-station-fw` (ESP32 PlatformIO/ESP-IDF).
 
-## Phase 1 — Make backend “pilot usable” (1–2 days)
-### A) Add Admin mapping endpoints (required)
-Right now stations can claim, but there is no way to map them (station_id/line/type) except manual DB.
+## The 3 pilot goals (still the same)
+1) **Provision + map stations** quickly (MAC → station_id + line + type)
+2) **Create bundles + assign RFID** reliably (no duplicates, traceable)
+3) **Ingest scans** reliably with great operator feedback (OK vs unmapped vs unknown tag)
 
-Add endpoints (admin token / basic auth for now):
-- `GET /api/v1/admin/factories` + `POST /api/v1/admin/factories`
-- `POST /api/v1/admin/lines` (create line under factory)
-- `GET /api/v1/admin/stations?factory_code=...` (list stations)
-- `PATCH /api/v1/admin/stations/:id/map`
-  - body: `{ station_id, line_name or line_id, type }`
-  - enforce unique `(factory_id, station_id)`
+## Decisions to finalize for pilot (CEO-ready scope lock)
+1) Operator identity in MVP: **none** OR **badge/PIN**
+2) Station mapping scale: sewing stations per line ~ __ ?
+3) QC flow: just `qc_fail` OR add rework events
+4) Connectivity in pilot: Wi‑Fi only OR also LoRaWAN fallback
 
-### B) Add “seed” and “dev” UX
-- Add `npm run seed` to create demo factory + lines.
-- Add `docker-compose.yml` for local Postgres.
+## Phase A — Finish “Pilot Runbook” (0.5 day)
+Deliverable: a document that a factory tech can follow.
 
-### C) Add “read APIs” for UI/device debugging
-- `GET /api/v1/stations/me` (who am I, mapping status)
-- `GET /api/v1/bundles/:id` + `GET /api/v1/bundles?factory_code=&status=&since=`
-- `GET /api/v1/bundles/:id/events` (timeline)
+- [ ] Prereqs: backend URL, factory_code, Wi‑Fi SSID/pass
+- [ ] Start backend + DB
+- [ ] Station claim checklist
+- [ ] Station mapping checklist (what station_id means; naming convention)
+- [ ] Bundle create + RFID assign steps
+- [ ] Scan and verify event timeline
+- [ ] Common errors + fixes (`station_unmapped`, `unknown_bundle`, auth)
 
-### D) Tighten validation + error contract
-- Standardize errors: `invalid_request | unauthorized | station_unmapped | unknown_bundle | unknown_factory | rfid_already_assigned`.
-- Enforce `event_id` format (ULID/UUID-ish) if you want.
+## Phase B — Firmware end-to-end validation (1 day)
+Goal: 1 station does claim → heartbeat → scan → post event → feedback.
 
-### E) Expand tests
-Add acceptance tests for:
-- claim station creates factory if missing
-- mapping endpoint works + rejects duplicates
-- bundle create: unknown_factory fails
-- event ingest: QC_PASS/QC_FAIL updates bundle status
+- [ ] Confirm MFRC522 UID read with real cards (UID as **hex**) matches backend expectation (`bundle.rfid_uid`)
+- [ ] Verify `POST /api/v1/events` success path and failure feedback patterns
+- [ ] Add/confirm retry strategy and de-dup on device
+- [ ] Confirm station mapping status is visible (LCD)
 
-## Phase 2 — Pilot “station tool” (fast UI) (1–2 days)
-To run a pilot you need a quick operator/admin interface.
+## Phase C — Admin UI / operator tooling (1–2 days)
+Pick the fastest UI that supports pilot operations:
 
-Option 1 (fastest): **Single-page admin web** (Next.js or Vite) for:
-- Station list (by MAC) → map station
-- Bundle create (assign RFID)
-- Bundle lookup by RFID
+- Station list (last_seen, mapped/unmapped)
+- Map station (station_id/line/type)
+- Create bundle + assign RFID
+- Lookup bundle by RFID (show last events)
 
-Option 2: use **Node-RED dashboard** temporarily.
+## Phase D — Reliability + observability hardening (1–2 days)
+- [ ] Add server-side metrics/logging: event rates, failure counts
+- [ ] Add station heartbeat tracking (`last_seen` already planned)
+- [ ] Rate limiting / auth tightening for admin endpoints
+- [ ] Database indexes for RFID lookup and event timelines
 
-## Phase 3 — Device integration loop (parallel)
-- First bring up 1 station firmware (ESP32) that:
-  - calls `/stations/claim`
-  - posts `/events` with local queue + retries
-  - LED/buzzer feedback based on HTTP response
-- Pilot acceptance: 99% scan success on good Wi‑Fi; clear error feedback.
-
-## Suggested “today” sequence (lowest risk)
-1) Decide factory_code naming convention for pilot (e.g., `RMG-DEMO-001`).
-2) Add admin mapping endpoints + seed.
-3) Write a 1-page runbook: how to claim, map, create bundle, scan.
-4) Try end-to-end flow with Postman/curl.
-
----
-If you want, I can implement Phase 1 (admin endpoints + compose + seeds + tests) directly in this repo next.
+## Phase E — Pilot acceptance checklist
+- [ ] Provision + map a station in < 2 minutes
+- [ ] Scan success rate ≥ 99% for valid tags on LAN Wi‑Fi
+- [ ] Clear feedback for top 3 errors
+- [ ] Event timeline shows correct ordering and idempotency
