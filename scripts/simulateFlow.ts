@@ -1,12 +1,13 @@
 import 'dotenv/config';
 
 const API = process.env.API_BASE ?? `http://127.0.0.1:${process.env.PORT ?? '3003'}`;
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
+const _adminToken = process.env.ADMIN_TOKEN;
 const FACTORY_CODE = process.env.SEED_FACTORY_CODE ?? 'SOUTHERNIOT-DEMO';
 
-if (!ADMIN_TOKEN) {
+if (!_adminToken) {
   throw new Error('ADMIN_TOKEN is required in .env for simulation');
 }
+const ADMIN_TOKEN: string = _adminToken;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 

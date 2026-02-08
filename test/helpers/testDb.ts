@@ -8,7 +8,7 @@ export async function createTestDb() {
   // pg-mem requires registering some functions used by pg
   mem.public.registerFunction({
     name: 'now',
-    returns: 'timestamptz',
+    returns: 'timestamptz' as any,
     implementation: () => new Date()
   });
 
