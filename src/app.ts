@@ -9,6 +9,7 @@ import { bundlesRouter } from './routes/bundles';
 import { adminRouter } from './routes/admin';
 import { adminEventsRouter } from './routes/adminEvents';
 import { stationStatusRouter } from './routes/stationStatus';
+import { adminBundlesRouter } from './routes/adminBundles';
 
 export function createApp(opts: { db: Db; logLevel?: string }) {
   const app = express();
@@ -18,7 +19,14 @@ export function createApp(opts: { db: Db; logLevel?: string }) {
   app.use(corsFromEnv());
   app.use(express.json({ limit: '1mb' }));
 
-  app.get('/health', (_req, res) => res.json({ ok: true }));
+  app.get('/health', async (_req, res) => {
+    try {
+      await opts.db.query('SELECT 1');
+      return res.json({ ok: true });
+    } catch {
+      return res.status(503).json({ ok: false, error: 'db_unreachable' });
+    }
+  });
 
   app.use('/api/v1/stations', stationsRouter(opts.db));
   app.use('/api/v1/station', stationStatusRouter(opts.db));
@@ -26,6 +34,7 @@ export function createApp(opts: { db: Db; logLevel?: string }) {
   app.use('/api/v1/bundles', bundlesRouter(opts.db));
   app.use('/api/v1/admin', adminRouter(opts.db));
   app.use('/api/v1/admin/events', adminEventsRouter(opts.db));
+  app.use('/api/v1/admin/bundles', adminBundlesRouter(opts.db));
 
   // basic error handler
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

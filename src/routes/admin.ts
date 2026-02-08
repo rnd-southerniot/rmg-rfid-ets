@@ -166,5 +166,27 @@ export function adminRouter(db: Db) {
     return res.json({ ok: true, station: q.rows[0] });
   });
 
+  r.patch('/stations/:id/unmap', async (req, res) => {
+    const stationPk = req.params.id;
+
+    const st0 = await db.query('SELECT id FROM stations WHERE id = $1 LIMIT 1', [stationPk]);
+    if (st0.rows.length === 0) return res.status(404).json({ ok: false, error: 'not_found' });
+
+    await db.query(
+      'UPDATE stations SET station_id = NULL, line_id = NULL, type = NULL, updated_at = now() WHERE id = $1',
+      [stationPk]
+    );
+
+    const q = await db.query(
+      `SELECT s.id, s.mac, s.station_id, s.line_id, l.name as line_name, s.type
+       FROM stations s
+       LEFT JOIN lines l ON l.id = s.line_id
+       WHERE s.id = $1`,
+      [stationPk]
+    );
+
+    return res.json({ ok: true, station: q.rows[0] });
+  });
+
   return r;
 }

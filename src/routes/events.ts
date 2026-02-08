@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import type { Db } from '../db';
 import { stationAuth } from '../auth';
-import { EventTypeSchema, IsoTsSchema } from '../validation';
+import { EventTypeSchema, IsoTsSchema, RfidUidSchema } from '../validation';
 import { ulidLike } from '../ids';
 
 const DefectSchema = z.object({
@@ -15,7 +15,7 @@ const DefectSchema = z.object({
 const EventSchema = z.object({
   event_id: z.string().min(1),
   ts: IsoTsSchema,
-  bundle: z.object({ rfid_uid: z.string().min(1) }),
+  bundle: z.object({ rfid_uid: RfidUidSchema }),
   event_type: EventTypeSchema,
   meta: z.record(z.any()).optional(),
   defects: z.array(DefectSchema).optional(),

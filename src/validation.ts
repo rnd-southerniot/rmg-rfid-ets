@@ -9,3 +9,5 @@ export const MacSchema = z
 export const IsoTsSchema = z.string().datetime();
 
 export const EventTypeSchema = z.enum(['COMPLETE', 'QC_PASS', 'QC_FAIL']);
+
+export const RfidUidSchema = z.string().min(1).transform((s) => s.trim().toUpperCase());

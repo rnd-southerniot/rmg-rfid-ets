@@ -84,6 +84,58 @@ describe('API acceptance (minimal)', () => {
     expect(res.body).toEqual({ ok: false, error: 'unknown_bundle' });
   });
 
+  it('POST /api/v1/bundles normalizes lowercase rfid_uid to uppercase', async () => {
+    await seedFactoryAndLine(pool);
+
+    const app = createApp({ db: pool, logLevel: 'silent' });
+    const res = await request(app).post('/api/v1/bundles').send({
+      factory_code: 'SOUTHERNIOT-DEMO',
+      order_id: 'ORD-1',
+      style: 'STYLE',
+      color: 'NAVY',
+      size: 'L',
+      qty: 10,
+      rfid_uid: 'e2000017221101441890abcd'
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.rfid_uid).toBe('E2000017221101441890ABCD');
+
+    // Lookup via lowercase param should also match
+    const lookup = await request(app).get('/api/v1/bundles/by-rfid/e2000017221101441890abcd');
+    expect(lookup.status).toBe(200);
+    expect(lookup.body.bundle.rfid_uid).toBe('E2000017221101441890ABCD');
+  });
+
+  it('POST /api/v1/events normalizes lowercase rfid_uid', async () => {
+    await seedFactoryAndLine(pool);
+
+    await pool.query(
+      'INSERT INTO stations (id, factory_id, mac, station_id, line_id, type, token_hash) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+      ['st_1', 'fac_1', 'AA:BB:CC:DD:EE:FF', 'L1-SW-01', 'ln_1', 'sewing', tokenHash('sttok_test')]
+    );
+
+    await pool.query(
+      `INSERT INTO bundles (id, factory_id, order_id, style, color, size, qty, rfid_uid, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+      ['bdl_1', 'fac_1', 'ORD-1', 'STYLE', 'NAVY', 'L', 10, 'E2000017221101441890ABCD', 'created']
+    );
+
+    const app = createApp({ db: pool, logLevel: 'silent' });
+    const res = await request(app)
+      .post('/api/v1/events')
+      .set('Authorization', 'Bearer sttok_test')
+      .send({
+        event_id: '01NORM',
+        ts: '2026-02-05T11:04:00Z',
+        bundle: { rfid_uid: 'e2000017221101441890abcd' },
+        event_type: 'COMPLETE'
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+  });
+
   it('POST /api/v1/events is idempotent by (station_id,event_id)', async () => {
     await seedFactoryAndLine(pool);
 
