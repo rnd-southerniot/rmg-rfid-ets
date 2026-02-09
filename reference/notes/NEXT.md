@@ -1,6 +1,6 @@
 # Next steps (ETS / RFID)
 
-_Last updated: 2026-02-09 10:55 (GMT+6)_
+_Last updated: 2026-02-09 11:10 (GMT+6)_
 
 ## Current status (done)
 - ✅ WiFi connect + station claim + periodic heartbeat
@@ -42,11 +42,13 @@ _Last updated: 2026-02-09 10:55 (GMT+6)_
   - Locked `BUZZER_FREQ_HZ` to 2700 Hz in `config.h`
   - Success: 2700 Hz, Warning: 2025 Hz (double beep), Error: 1350 Hz
   - Sweep removed from boot
+- ✅ LCD/UI polish (2026-02-09)
+  - Screen tracking to skip redundant full redraws (no flicker on scan→ready transition)
+  - Status bar on ready screen: WiFi status, station ID, HH:MM time (updates every 2s)
+  - Moved scan prompt up to make room for status bar
 
 ## Next time (pick up here)
-### 1) LCD/UI polish
-- [ ] Only redraw when values change (reduce flicker)
-- [ ] Status bar: WiFi signal, station ID, time
+All core features are done. Remaining items are nice-to-haves:
 
 ## Later
 - [ ] UID cascade (7/10-byte) support if needed (MFRC522)
