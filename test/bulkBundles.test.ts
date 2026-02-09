@@ -37,9 +37,9 @@ describe('Bulk bundle creation', () => {
       .post('/api/v1/bundles/bulk')
       .send({
         bundles: [
-          makeBundle('RFID001'),
-          makeBundle('RFID002'),
-          makeBundle('RFID003')
+          makeBundle('AA00000001'),
+          makeBundle('AA00000002'),
+          makeBundle('AA00000003')
         ]
       });
 
@@ -54,11 +54,11 @@ describe('Bulk bundle creation', () => {
   it('POST /api/v1/bundles/bulk handles partial failure on duplicate RFIDs', async () => {
     await seedFactoryAndLine(pool);
 
-    // Pre-create a bundle with RFID001
+    // Pre-create a bundle with AA00000001
     await pool.query(
       `INSERT INTO bundles (id, factory_id, order_id, style, color, size, qty, rfid_uid, status)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-      ['bdl_existing', 'fac_1', 'ORD-1', 'STYLE', 'NAVY', 'L', 10, 'RFID001', 'created']
+      ['bdl_existing', 'fac_1', 'ORD-1', 'STYLE', 'NAVY', 'L', 10, 'AA00000001', 'created']
     );
 
     const app = createApp({ db: pool, logLevel: 'silent' });
@@ -66,8 +66,8 @@ describe('Bulk bundle creation', () => {
       .post('/api/v1/bundles/bulk')
       .send({
         bundles: [
-          makeBundle('RFID001'), // duplicate — should fail
-          makeBundle('RFID002'), // should succeed
+          makeBundle('AA00000001'), // duplicate — should fail
+          makeBundle('AA00000002'), // should succeed
         ]
       });
 
@@ -99,7 +99,7 @@ describe('Bulk bundle creation', () => {
     const res = await request(app)
       .post('/api/v1/bundles/bulk')
       .send({
-        bundles: [makeBundle('rfid_lowercase_001')]
+        bundles: [makeBundle('aa00bb00cc')]
       });
 
     expect(res.status).toBe(201);
@@ -107,7 +107,7 @@ describe('Bulk bundle creation', () => {
 
     // Verify it was stored uppercase
     const q = await pool.query('SELECT rfid_uid FROM bundles WHERE id = $1', [res.body.results[0].bundle_id]);
-    expect(q.rows[0].rfid_uid).toBe('RFID_LOWERCASE_001');
+    expect(q.rows[0].rfid_uid).toBe('AA00BB00CC');
   });
 
   it('POST /api/v1/bundles/bulk reports unknown_factory per item', async () => {
@@ -118,8 +118,8 @@ describe('Bulk bundle creation', () => {
       .post('/api/v1/bundles/bulk')
       .send({
         bundles: [
-          makeBundle('RFID001', { factory_code: 'NONEXISTENT' }),
-          makeBundle('RFID002')
+          makeBundle('AA00000001', { factory_code: 'NONEXISTENT' }),
+          makeBundle('AA00000002')
         ]
       });
 

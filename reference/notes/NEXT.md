@@ -65,4 +65,8 @@ _Last updated: 2026-02-09 14:30 (GMT+6)_
 All core features and nice-to-haves are done. Remaining:
 
 ## Later
-- [ ] UID cascade (7/10-byte) support if needed (MFRC522)
+- ✅ UID cascade (7/10-byte) support (2026-02-09)
+  - Backend `RfidUidSchema` now validates hex-only + even-length (whole bytes)
+  - No length restriction — works for 4-byte (CL1), 7-byte (CL2), 10-byte (CL3), and UHF EPCs
+  - Firmware already handles cascade levels via `mfrc522.uid.size` — no changes needed
+  - Tests added for 7-byte UID end-to-end flow and non-hex rejection

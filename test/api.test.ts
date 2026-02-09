@@ -136,6 +136,63 @@ describe('API acceptance (minimal)', () => {
     expect(res.body.ok).toBe(true);
   });
 
+  it('7-byte UID: bundle create + event post works end-to-end', async () => {
+    await seedFactoryAndLine(pool);
+
+    const SEVEN_BYTE_UID = '04A1B2C3D4E5F6'; // 14 hex chars = 7 bytes
+
+    await pool.query(
+      'INSERT INTO stations (id, factory_id, mac, station_id, line_id, type, token_hash) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+      ['st_1', 'fac_1', 'AA:BB:CC:DD:EE:FF', 'L1-SW-01', 'ln_1', 'sewing', tokenHash('sttok_test')]
+    );
+
+    const app = createApp({ db: pool, logLevel: 'silent' });
+
+    // Create bundle with 7-byte UID
+    const create = await request(app).post('/api/v1/bundles').send({
+      factory_code: 'SOUTHERNIOT-DEMO',
+      order_id: 'ORD-7B',
+      style: 'STYLE',
+      color: 'RED',
+      size: 'M',
+      qty: 5,
+      rfid_uid: SEVEN_BYTE_UID
+    });
+    expect(create.status).toBe(201);
+    expect(create.body.rfid_uid).toBe(SEVEN_BYTE_UID);
+
+    // Post event against that bundle
+    const event = await request(app)
+      .post('/api/v1/events')
+      .set('Authorization', 'Bearer sttok_test')
+      .send({
+        event_id: '01SEVEN',
+        ts: '2026-02-09T12:00:00Z',
+        bundle: { rfid_uid: SEVEN_BYTE_UID },
+        event_type: 'COMPLETE'
+      });
+    expect(event.status).toBe(200);
+    expect(event.body.ok).toBe(true);
+  });
+
+  it('POST /api/v1/bundles rejects non-hex RFID UID', async () => {
+    await seedFactoryAndLine(pool);
+
+    const app = createApp({ db: pool, logLevel: 'silent' });
+    const res = await request(app).post('/api/v1/bundles').send({
+      factory_code: 'SOUTHERNIOT-DEMO',
+      order_id: 'ORD-BAD',
+      style: 'STYLE',
+      color: 'NAVY',
+      size: 'L',
+      qty: 10,
+      rfid_uid: 'GHIJKL123456'
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.ok).toBe(false);
+  });
+
   it('POST /api/v1/events is idempotent by (station_id,event_id)', async () => {
     await seedFactoryAndLine(pool);
 
