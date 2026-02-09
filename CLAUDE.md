@@ -25,6 +25,9 @@ npm run seed           # Seed demo factory + lines
 npm run simulate       # Simulate a full claim→bundle→events flow
 npm run simulate:demo  # Live demo: auto-discover stations, continuous bundle flow
 SIM_SPEED=fast npm run simulate:demo  # Fast mode (5-10s steps instead of 30-60s)
+
+# Web Demo Dashboard
+# Open http://localhost:3003/demo in browser (requires running backend + mapped stations)
 ```
 
 ## Architecture
@@ -43,6 +46,7 @@ Each route file exports a factory function that takes `Db` and returns an Expres
 - **admin.ts** — CRUD for factories, lines, station mapping. Protected by `ADMIN_TOKEN` via `x-admin-token` header or `admin_token` query param.
 - **adminEvents.ts** — `GET /api/v1/admin/events/recent` and `GET /api/v1/admin/events/stream` (SSE polling).
 - **stationStatus.ts** — `POST /api/v1/station/heartbeat` and `GET /api/v1/station/me` (station self-introspection). Uses station bearer auth.
+- **simulation.ts** — `POST /api/v1/simulation/start`, `POST /api/v1/simulation/stop`, `GET /api/v1/simulation/status`, `GET /api/v1/simulation/log` (SSE). Admin auth. Controls the in-process simulation engine.
 
 ### Auth (`src/auth.ts`, `src/adminAuth.ts`)
 
@@ -56,6 +60,7 @@ Two auth mechanisms:
 - `validation.ts` — Shared Zod schemas: `MacSchema` (XX:XX:XX:XX:XX:XX, auto-uppercased), `IsoTsSchema`, `EventTypeSchema` (COMPLETE | QC_PASS | QC_FAIL)
 - `env.ts` — Zod-validated env config (DATABASE_URL required, PORT defaults to 3000)
 - `cors.ts` — CORS middleware, only active when `CORS_ORIGIN` env is set
+- `simulation.ts` — `SimulationEngine` class: extracted from `simulateDemo.ts`, writes directly to DB pool (no HTTP self-calls). Structured log entries via `onLog()` callbacks. Used by the simulation route and the `/demo` dashboard.
 
 ### Database
 
@@ -91,3 +96,13 @@ Continuous simulation against a running backend with real mapped stations. Used 
 - **Heartbeats**: background POST every 30s to keep `last_seen_at` fresh
 - **Speed**: `SIM_SPEED=realistic` (30-60s, default) or `SIM_SPEED=fast` (5-10s)
 - **Requires**: running backend, Postgres, `ADMIN_TOKEN` in `.env`, at least 2 mapped stations for `SEED_FACTORY_CODE`
+
+### Web Demo Dashboard (`public/demo.html`)
+
+Browser-based simulation dashboard served at `GET /demo`. Single self-contained HTML file (inline CSS + JS, no build step). Used for CEO/CTO presentations.
+
+- **Controls**: Start/Stop simulation, speed toggle (fast/realistic), admin token prompt
+- **Pipeline visualization**: Vertical flow of station cards with active-station pulse/glow animations
+- **Live feed**: Scrolling event log from `/api/v1/simulation/log` SSE stream
+- **Stats bar**: Running totals (bundles, pass, fail, rework, events)
+- **Simulation engine** (`src/simulation.ts`): Runs in-process, writes directly to the DB pool (no HTTP self-calls). Extracted from `scripts/simulateDemo.ts`.

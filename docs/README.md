@@ -21,6 +21,11 @@ Folder: `exports/`
   - `exports/sequence-provisioning.svg`
   - `exports/sequence-scan-event.svg`
 
+## Live Demo
+
+- **Web dashboard:** Start the backend and open `http://localhost:3003/demo`
+- Controls simulation start/stop, shows pipeline visualization and live event feed
+
 ## How to re-export
 
 See: `exports/EXPORT_INSTRUCTIONS.md`

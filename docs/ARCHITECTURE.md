@@ -24,10 +24,12 @@ flowchart LR
 
   subgraph Admin[Admin / Ops]
     UI[Admin UI\nMapping + Monitoring]
+    DEMO[Demo Dashboard\n/demo\nSimulation Control + Live Feed]
   end
 
   ST1 -- Wi‑Fi / HTTP(S) --> API
   UI -- HTTPS --> API
+  DEMO -- HTTPS --> API
   API -- SQL --> DB
 ```
 
@@ -108,6 +110,17 @@ sequenceDiagram
   API-->>Station: 200 OK
   Station->>Station: beep/LED success
 ```
+
+### 4) Simulation control (web dashboard)
+
+The backend includes a web-based demo dashboard at `GET /demo` for CEO/CTO presentations.
+
+- `POST /api/v1/simulation/start` — starts in-process simulation (admin auth)
+- `POST /api/v1/simulation/stop` — stops simulation
+- `GET /api/v1/simulation/status` — current state (pipeline, stats)
+- `GET /api/v1/simulation/log` — SSE stream of simulation log entries
+
+The simulation engine (`src/simulation.ts`) writes directly to the DB pool — no HTTP self-calls. It discovers mapped stations, builds a pipeline (cutting → sewing → finishing → qc), and continuously creates bundles with realistic QC scenarios (70% pass, 20% fail, 10% rework).
 
 ## Deployment notes
 

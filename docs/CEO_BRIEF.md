@@ -79,8 +79,17 @@ Purpose: map stations, monitor stations, manage bundles.
 - **Time to provision + map a station** < 2 minutes
 - **Zero duplicate state transitions** (dedupe works)
 
-## 9) Roadmap after pilot
-- Multi-event workflows (QC_PASS/QC_FAIL, rework)
+## 9) Live Demo Dashboard
+
+A browser-based simulation dashboard is available at `http://<host>:3003/demo` for real-time presentations.
+
+- **Start/Stop** simulation from the browser (no terminal needed)
+- **Pipeline visualization** shows station cards lighting up as bundles flow through
+- **Live event feed** streams every scan, QC pass/fail, and rework in real-time
+- **Stats bar** shows running totals (bundles, pass, fail, rework, events)
+- Supports **fast** (5-10s steps) and **realistic** (30-60s steps) speed modes
+
+## 10) Roadmap after pilot
 - Operator identity (badge/PIN) and accountability
 - Offline buffering on device for Wi‑Fi drops
 - Analytics dashboards (line throughput, bottlenecks, exceptions)

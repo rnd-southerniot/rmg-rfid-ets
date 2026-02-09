@@ -15,6 +15,8 @@ Backend repo: `rnd-southerniot/rmg-rfid-ets`
   - `src/routes/stationStatus.ts`
   - `src/routes/adminEvents.ts`
 - Local ops: docker compose, seeds, simulation scripts
+- Web demo dashboard at `/demo` — browser-based simulation control + live pipeline visualization (SSE)
+- Simulation engine (`src/simulation.ts`) runs in-process, writes directly to DB pool
 - CEO docs + diagrams exported to PNG/SVG/PDF under `docs/`
 
 > Note: Firmware lives in `projects/rmg-rfid-station-fw` (ESP32 PlatformIO/ESP-IDF).
