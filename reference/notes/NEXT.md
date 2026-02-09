@@ -1,6 +1,6 @@
 # Next steps (ETS / RFID)
 
-_Last updated: 2026-02-09 11:30 (GMT+6)_
+_Last updated: 2026-02-09 14:30 (GMT+6)_
 
 ## Current status (done)
 - ✅ WiFi connect + station claim + periodic heartbeat
@@ -55,10 +55,14 @@ _Last updated: 2026-02-09 11:30 (GMT+6)_
   - Tests LCD, LED (R/G/B flash), buzzer (beep), RFID (version reg), touch (I2C probe)
   - Results displayed on LCD checklist for 1.5s
   - Serial output: `[POST] LCD=OK LED=OK Buzzer=OK RFID=OK Touch=OK`
+- ✅ Serial debug log levels (2026-02-09)
+  - Created `log.h` with compile-time LOG_E/LOG_W/LOG_I/LOG_D macros
+  - `LOG_LEVEL 2` (INFO) in `config.h` — change to 3 for DEBUG, 0 for ERROR-only
+  - All Serial.printf/println calls replaced across all 11 source files
+  - Verified on hardware: log output working correctly
 
 ## Next time (pick up here)
 All core features and nice-to-haves are done. Remaining:
 
 ## Later
 - [ ] UID cascade (7/10-byte) support if needed (MFRC522)
-- [ ] Serial debug log levels
