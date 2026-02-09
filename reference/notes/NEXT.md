@@ -1,13 +1,13 @@
 # Next steps (ETS / RFID)
 
-_Last updated: 2026-02-09 10:45 (GMT+6)_
+_Last updated: 2026-02-09 10:55 (GMT+6)_
 
 ## Current status (done)
 - ✅ WiFi connect + station claim + periodic heartbeat
 - ✅ MFRC522 UID read
 - ✅ POST `/api/v1/events` with `bundle.rfid_uid` (uppercase hex)
 - ✅ LCD (ILI9341 SPI) status UI + touch (FT6336) buttons (REFRESH, BUZ)
-- ✅ Buzzer LEDC PWM tone + startup sweep
+- ✅ Buzzer LEDC PWM tone, locked to 2700 Hz (piezo resonant)
 - ✅ Backend `projects/rmg-rfid-ets`: `/api/v1/events` ingest + station mapping
 - ✅ Admin UI (React 19 + Vite + TanStack Router/Query + Tailwind v4 + shadcn/ui)
   - Stations list + map/unmap dialogs
@@ -37,14 +37,14 @@ _Last updated: 2026-02-09 10:45 (GMT+6)_
   - Touch PASS → event posted as `QC_PASS` → 200 OK
   - Touch FAIL → event posted as `QC_FAIL` → 200 OK
   - Timeout not explicitly tested (10s no-touch auto-cancel)
+- ✅ Buzzer frequency locked (2026-02-09)
+  - Ran frequency sweep 500-4000 Hz on hardware
+  - Locked `BUZZER_FREQ_HZ` to 2700 Hz in `config.h`
+  - Success: 2700 Hz, Warning: 2025 Hz (double beep), Error: 1350 Hz
+  - Sweep removed from boot
 
 ## Next time (pick up here)
-### 1) Lock buzzer frequency
-- [ ] Use current startup sweep to identify loudest/clearest frequency for the physical buzzer
-- [ ] Set a constant (e.g. `BUZZ_FREQ_HZ`) and remove/disable sweep for normal boot (optional)
-- [ ] Verify BUZ toggle uses the locked frequency
-
-### 2) LCD/UI polish
+### 1) LCD/UI polish
 - [ ] Only redraw when values change (reduce flicker)
 - [ ] Status bar: WiFi signal, station ID, time
 
