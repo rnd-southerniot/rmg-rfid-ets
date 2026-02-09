@@ -1,0 +1,33 @@
+# See https://fly.io/docs/reference/configuration/ for reference.
+
+app = "rmg-rfid-ets"
+primary_region = "sin"
+
+[build]
+
+[env]
+  PORT = "3000"
+  LOG_LEVEL = "info"
+  NODE_ENV = "production"
+  SEED_FACTORY_CODE = "SOUTHERNIOT-DEMO"
+  SEED_FACTORY_NAME = "SOUTHERNIOT-DEMO"
+  SEED_LINES = "L1,L2"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 100
+    soft_limit = 80
+
+[deploy]
+  release_command = "sh scripts/deploy-release.sh"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
