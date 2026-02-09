@@ -1,6 +1,6 @@
 # Next steps (ETS / RFID)
 
-_Last updated: 2026-02-09 11:20 (GMT+6)_
+_Last updated: 2026-02-09 11:30 (GMT+6)_
 
 ## Current status (done)
 - ✅ WiFi connect + station claim + periodic heartbeat
@@ -51,11 +51,14 @@ _Last updated: 2026-02-09 11:20 (GMT+6)_
   - LCD progress display during update
   - LED feedback: blue=updating, green=done, red=error
   - Usage: `pio run -t upload --upload-port <ESP32_IP>`
+- ✅ Power-on self-test (2026-02-09)
+  - Tests LCD, LED (R/G/B flash), buzzer (beep), RFID (version reg), touch (I2C probe)
+  - Results displayed on LCD checklist for 1.5s
+  - Serial output: `[POST] LCD=OK LED=OK Buzzer=OK RFID=OK Touch=OK`
 
 ## Next time (pick up here)
-All core features are done. Remaining items are nice-to-haves:
+All core features and nice-to-haves are done. Remaining:
 
 ## Later
 - [ ] UID cascade (7/10-byte) support if needed (MFRC522)
-- [ ] Power-on self-test (LED, buzzer, RFID, LCD, WiFi)
 - [ ] Serial debug log levels
