@@ -12,6 +12,7 @@
     "seed": "tsx scripts/seed.ts",
     "simulate": "tsx scripts/simulateFlow.ts",
     "simulate:demo": "tsx scripts/simulateDemo.ts",
+    "demo": "open http://localhost:3003/demo",
     "test": "vitest run",
     "test:watch": "vitest"
   },
