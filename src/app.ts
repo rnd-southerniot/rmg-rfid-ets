@@ -1,3 +1,4 @@
+import path from 'node:path';
 import express from 'express';
 import pinoHttp from 'pino-http';
 import pino from 'pino';
@@ -10,6 +11,7 @@ import { adminRouter } from './routes/admin';
 import { adminEventsRouter } from './routes/adminEvents';
 import { stationStatusRouter } from './routes/stationStatus';
 import { adminBundlesRouter } from './routes/adminBundles';
+import { simulationRouter } from './routes/simulation';
 
 export function createApp(opts: { db: Db; logLevel?: string }) {
   const app = express();
@@ -35,6 +37,11 @@ export function createApp(opts: { db: Db; logLevel?: string }) {
   app.use('/api/v1/admin', adminRouter(opts.db));
   app.use('/api/v1/admin/events', adminEventsRouter(opts.db));
   app.use('/api/v1/admin/bundles', adminBundlesRouter(opts.db));
+  app.use('/api/v1/simulation', simulationRouter(opts.db));
+
+  // Serve demo dashboard
+  app.use(express.static(path.join(__dirname, '..', 'public')));
+  app.get('/demo', (_req, res) => res.redirect('/demo.html'));
 
   // basic error handler
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

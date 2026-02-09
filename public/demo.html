@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RMG RFID — Live Demo</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #232733;
+    --border: #2d3140;
+    --text: #e4e6ef;
+    --text-dim: #8b8fa3;
+    --green: #3dd68c;
+    --green-bg: rgba(61,214,140,.12);
+    --red: #f56565;
+    --red-bg: rgba(245,101,101,.12);
+    --yellow: #ecc94b;
+    --yellow-bg: rgba(236,201,75,.12);
+    --blue: #63b3ed;
+    --blue-bg: rgba(99,179,237,.12);
+    --purple: #b794f4;
+    --font: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── Header ─────────────────────────────────────────── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .header h1 {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .header h1 span { color: var(--green); }
+
+  .controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .speed-toggle {
+    display: flex;
+    background: var(--surface2);
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin-right: 8px;
+  }
+
+  .speed-toggle button {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    padding: 6px 12px;
+    font-family: var(--font);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+
+  .speed-toggle button.active {
+    background: var(--green);
+    color: var(--bg);
+    font-weight: 600;
+  }
+
+  .btn {
+    padding: 7px 18px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+  }
+
+  .btn-start {
+    background: var(--green);
+    color: var(--bg);
+    border-color: var(--green);
+  }
+  .btn-start:hover { filter: brightness(1.1); }
+  .btn-start:disabled { opacity: .4; cursor: not-allowed; }
+
+  .btn-stop {
+    background: transparent;
+    color: var(--red);
+    border-color: var(--red);
+  }
+  .btn-stop:hover { background: var(--red-bg); }
+  .btn-stop:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── Status indicator ───────────────────────────────── */
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    margin-right: 8px;
+  }
+  .status-dot.running {
+    background: var(--green);
+    animation: pulse-dot 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(61,214,140,.5); }
+    50% { box-shadow: 0 0 0 6px rgba(61,214,140,0); }
+  }
+
+  /* ── Main layout ────────────────────────────────────── */
+  .main {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    grid-template-rows: 1fr auto;
+    height: calc(100vh - 57px);
+  }
+
+  /* ── Pipeline panel ─────────────────────────────────── */
+  .pipeline {
+    grid-row: 1 / 3;
+    border-right: 1px solid var(--border);
+    padding: 20px;
+    overflow-y: auto;
+  }
+
+  .pipeline h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  .station-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 4px;
+    transition: all .3s;
+    position: relative;
+  }
+
+  .station-card .name {
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .station-card .type {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .station-card.active {
+    border-color: var(--green);
+    background: var(--green-bg);
+    animation: pulse-card 2s ease-in-out infinite;
+  }
+
+  .station-card.qc-fail {
+    border-color: var(--red);
+    background: var(--red-bg);
+    animation: flash-red .6s ease-in-out 3;
+  }
+
+  .station-card.qc-pass {
+    border-color: var(--green);
+    background: var(--green-bg);
+  }
+
+  @keyframes pulse-card {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(61,214,140,.25); }
+    50% { box-shadow: 0 0 0 4px rgba(61,214,140,0); }
+  }
+
+  @keyframes flash-red {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245,101,101,.3); }
+    50% { box-shadow: 0 0 8px 2px rgba(245,101,101,.4); }
+  }
+
+  .connector {
+    width: 2px;
+    height: 16px;
+    background: var(--border);
+    margin: 0 auto;
+  }
+
+  .connector.active {
+    background: var(--green);
+  }
+
+  /* ── Live feed ──────────────────────────────────────── */
+  .feed {
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .feed h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    flex-shrink: 0;
+  }
+
+  .feed-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse;
+  }
+
+  .feed-inner {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .log-entry {
+    padding: 4px 0;
+    display: flex;
+    gap: 10px;
+    font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    animation: fadeIn .3s;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .log-ts {
+    color: var(--text-dim);
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 70px;
+  }
+
+  .log-icon {
+    flex-shrink: 0;
+    width: 16px;
+    text-align: center;
+  }
+
+  .log-msg { flex: 1; word-break: break-word; }
+
+  .log-entry.bundle .log-icon { color: var(--blue); }
+  .log-entry.event .log-icon { color: var(--green); }
+  .log-entry.qc_pass .log-icon { color: var(--green); }
+  .log-entry.qc_fail .log-icon { color: var(--red); }
+  .log-entry.qc_fail .log-msg { color: var(--red); }
+  .log-entry.rework .log-icon { color: var(--yellow); }
+  .log-entry.rework .log-msg { color: var(--yellow); }
+  .log-entry.done .log-icon { color: var(--green); }
+  .log-entry.error .log-icon { color: var(--red); }
+  .log-entry.error .log-msg { color: var(--red); }
+  .log-entry.info .log-icon { color: var(--text-dim); }
+  .log-entry.stats .log-icon { color: var(--purple); }
+
+  /* ── Stats bar ──────────────────────────────────────── */
+  .stats-bar {
+    border-top: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    gap: 24px;
+    background: var(--surface);
+  }
+
+  .stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stat-label {
+    color: var(--text-dim);
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+
+  .stat-value {
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  .stat-value.green { color: var(--green); }
+  .stat-value.red { color: var(--red); }
+  .stat-value.yellow { color: var(--yellow); }
+  .stat-value.blue { color: var(--blue); }
+
+  /* ── Auth modal ─────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+
+  .modal-overlay.hidden { display: none; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    width: 380px;
+  }
+
+  .modal h2 {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+
+  .modal p {
+    color: var(--text-dim);
+    font-size: 12px;
+    margin-bottom: 20px;
+  }
+
+  .modal input {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    margin-bottom: 16px;
+    outline: none;
+  }
+
+  .modal input:focus { border-color: var(--green); }
+
+  .modal .btn { width: 100%; }
+
+  .empty-state {
+    color: var(--text-dim);
+    text-align: center;
+    padding: 40px 20px;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Auth modal -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <h2>Admin Token</h2>
+    <p>Enter the ADMIN_TOKEN to control the simulation.</p>
+    <input type="password" id="tokenInput" placeholder="admin token" autofocus>
+    <button class="btn btn-start" onclick="saveToken()" style="width:100%">Connect</button>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div style="display:flex;align-items:center;">
+    <div class="status-dot" id="statusDot"></div>
+    <h1>RMG RFID — <span>Live Demo</span></h1>
+  </div>
+  <div class="controls">
+    <div class="speed-toggle">
+      <button id="speedFast" class="active" onclick="setSpeed('fast')">Fast</button>
+      <button id="speedRealistic" onclick="setSpeed('realistic')">Realistic</button>
+    </div>
+    <button class="btn btn-start" id="btnStart" onclick="startSim()">Start</button>
+    <button class="btn btn-stop" id="btnStop" onclick="stopSim()" disabled>Stop</button>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <!-- Pipeline -->
+  <div class="pipeline">
+    <h2>Pipeline</h2>
+    <div id="pipelineContainer">
+      <div class="empty-state">Start simulation to see pipeline</div>
+    </div>
+  </div>
+
+  <!-- Feed -->
+  <div class="feed">
+    <h2>Live Feed</h2>
+    <div class="feed-list" id="feedList">
+      <div class="feed-inner" id="feedInner"></div>
+    </div>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="stat">
+      <span class="stat-label">Bundles</span>
+      <span class="stat-value blue" id="statBundles">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Pass</span>
+      <span class="stat-value green" id="statPass">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Fail</span>
+      <span class="stat-value red" id="statFail">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Rework</span>
+      <span class="stat-value yellow" id="statRework">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Events</span>
+      <span class="stat-value" id="statEvents">0</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+
+let token = '';
+let speed = 'fast';
+let eventSource = null;
+let activeStationId = null;
+let pipeline = [];
+
+const ICONS = {
+  info: '\u25F7',
+  bundle: '\u25CF',
+  event: '\u2713',
+  qc_pass: '\u2713',
+  qc_fail: '\u2717',
+  rework: '\u21A9',
+  done: '\u2705',
+  error: '\u2718',
+  stats: '\u2500',
+};
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+
+function init() {
+  // Check URL param first
+  const params = new URLSearchParams(window.location.search);
+  const urlToken = params.get('token');
+  if (urlToken) {
+    token = urlToken;
+    sessionStorage.setItem('admin_token', token);
+  } else {
+    token = sessionStorage.getItem('admin_token') || '';
+  }
+
+  if (token) {
+    document.getElementById('authModal').classList.add('hidden');
+    checkStatus();
+    connectLog();
+  }
+
+  // Enter key in token input
+  document.getElementById('tokenInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') saveToken();
+  });
+}
+
+function saveToken() {
+  const input = document.getElementById('tokenInput');
+  token = input.value.trim();
+  if (!token) return;
+  sessionStorage.setItem('admin_token', token);
+  document.getElementById('authModal').classList.add('hidden');
+  checkStatus();
+  connectLog();
+}
+
+function headers() {
+  return { 'x-admin-token': token, 'Content-Type': 'application/json' };
+}
+
+// ── API calls ────────────────────────────────────────────────────────────────
+
+async function checkStatus() {
+  try {
+    const res = await fetch('/api/v1/simulation/status', { headers: headers() });
+    if (res.status === 401) {
+      sessionStorage.removeItem('admin_token');
+      document.getElementById('authModal').classList.remove('hidden');
+      return;
+    }
+    const data = await res.json();
+    updateState(data);
+  } catch (e) {
+    addLogEntry({ ts: new Date().toLocaleTimeString('en-US', { hour12: false }), type: 'error', message: 'Failed to connect: ' + e.message });
+  }
+}
+
+async function startSim() {
+  document.getElementById('btnStart').disabled = true;
+  try {
+    const res = await fetch('/api/v1/simulation/start', {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ speed }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      addLogEntry({ ts: now(), type: 'error', message: data.error || 'Failed to start' });
+    }
+    // Reconnect SSE to pick up new engine
+    connectLog();
+    setTimeout(checkStatus, 500);
+  } catch (e) {
+    addLogEntry({ ts: now(), type: 'error', message: 'Start failed: ' + e.message });
+  } finally {
+    document.getElementById('btnStart').disabled = false;
+  }
+}
+
+async function stopSim() {
+  document.getElementById('btnStop').disabled = true;
+  try {
+    const res = await fetch('/api/v1/simulation/stop', {
+      method: 'POST',
+      headers: headers(),
+    });
+    const data = await res.json();
+    if (data.stats) updateStats(data.stats);
+    setRunning(false);
+  } catch (e) {
+    addLogEntry({ ts: now(), type: 'error', message: 'Stop failed: ' + e.message });
+  }
+}
+
+// ── SSE ──────────────────────────────────────────────────────────────────────
+
+function connectLog() {
+  if (eventSource) {
+    eventSource.close();
+    eventSource = null;
+  }
+
+  const url = '/api/v1/simulation/log?admin_token=' + encodeURIComponent(token);
+  eventSource = new EventSource(url);
+
+  eventSource.addEventListener('log', function(e) {
+    const entry = JSON.parse(e.data);
+    addLogEntry(entry);
+    handleLogEntry(entry);
+  });
+
+  eventSource.addEventListener('state', function(e) {
+    const state = JSON.parse(e.data);
+    updateState(state);
+  });
+
+  eventSource.addEventListener('hello', function() {
+    addLogEntry({ ts: now(), type: 'info', message: 'Connected to simulation log stream' });
+  });
+
+  eventSource.onerror = function() {
+    // EventSource will auto-reconnect
+  };
+}
+
+// ── UI updates ───────────────────────────────────────────────────────────────
+
+function now() {
+  return new Date().toLocaleTimeString('en-US', { hour12: false });
+}
+
+function updateState(state) {
+  setRunning(state.running);
+  if (state.pipeline && state.pipeline.length > 0) {
+    pipeline = state.pipeline;
+    renderPipeline();
+  }
+  if (state.stats) updateStats(state.stats);
+}
+
+function setRunning(running) {
+  const dot = document.getElementById('statusDot');
+  const btnStart = document.getElementById('btnStart');
+  const btnStop = document.getElementById('btnStop');
+
+  if (running) {
+    dot.classList.add('running');
+    btnStart.disabled = true;
+    btnStop.disabled = false;
+  } else {
+    dot.classList.remove('running');
+    btnStart.disabled = false;
+    btnStop.disabled = true;
+  }
+}
+
+function updateStats(stats) {
+  document.getElementById('statBundles').textContent = stats.bundles;
+  document.getElementById('statPass').textContent = stats.pass;
+  document.getElementById('statFail').textContent = stats.fail;
+  document.getElementById('statRework').textContent = stats.rework;
+  document.getElementById('statEvents').textContent = stats.events;
+}
+
+function setSpeed(s) {
+  speed = s;
+  document.getElementById('speedFast').classList.toggle('active', s === 'fast');
+  document.getElementById('speedRealistic').classList.toggle('active', s === 'realistic');
+}
+
+function renderPipeline() {
+  const container = document.getElementById('pipelineContainer');
+  let html = '';
+  pipeline.forEach(function(st, i) {
+    const id = 'station-' + st.station_id.replace(/[^a-zA-Z0-9]/g, '-');
+    html += '<div class="station-card" id="' + id + '">';
+    html += '<div class="name">' + escHtml(st.station_id) + '</div>';
+    html += '<div class="type">' + escHtml(st.type) + '</div>';
+    html += '</div>';
+    if (i < pipeline.length - 1) {
+      html += '<div class="connector" id="conn-' + i + '"></div>';
+    }
+  });
+  container.innerHTML = html;
+}
+
+function highlightStation(stationId, cls) {
+  // Clear previous highlights
+  document.querySelectorAll('.station-card').forEach(function(el) {
+    el.classList.remove('active', 'qc-fail', 'qc-pass');
+  });
+
+  if (!stationId) return;
+
+  const id = 'station-' + stationId.replace(/[^a-zA-Z0-9]/g, '-');
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.add(cls);
+    // Auto-clear qc-fail animation after a bit
+    if (cls === 'qc-fail') {
+      setTimeout(function() { el.classList.remove('qc-fail'); }, 2000);
+    }
+  }
+}
+
+function handleLogEntry(entry) {
+  const data = entry.data || {};
+  const sid = data.station_id;
+
+  if (entry.type === 'event' || entry.type === 'info') {
+    if (sid) highlightStation(sid, 'active');
+  } else if (entry.type === 'qc_pass') {
+    if (sid) highlightStation(sid, 'qc-pass');
+  } else if (entry.type === 'qc_fail') {
+    if (sid) highlightStation(sid, 'qc-fail');
+  } else if (entry.type === 'done') {
+    highlightStation(null, '');
+    if (data.stats) updateStats(data.stats);
+  }
+}
+
+function addLogEntry(entry) {
+  const inner = document.getElementById('feedInner');
+  const div = document.createElement('div');
+  div.className = 'log-entry ' + (entry.type || 'info');
+
+  const icon = ICONS[entry.type] || '\u25CB';
+
+  div.innerHTML =
+    '<span class="log-ts">' + escHtml(entry.ts || '') + '</span>' +
+    '<span class="log-icon">' + icon + '</span>' +
+    '<span class="log-msg">' + escHtml(entry.message || '') + '</span>';
+
+  inner.appendChild(div);
+
+  // Keep feed scrolled to bottom
+  const feedList = document.getElementById('feedList');
+  feedList.scrollTop = feedList.scrollHeight;
+
+  // Limit entries to avoid memory issues
+  while (inner.children.length > 500) {
+    inner.removeChild(inner.firstChild);
+  }
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
