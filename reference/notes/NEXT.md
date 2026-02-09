@@ -1,6 +1,6 @@
 # Next steps (ETS / RFID)
 
-_Last updated: 2026-02-09 10:35 (GMT+6)_
+_Last updated: 2026-02-09 10:45 (GMT+6)_
 
 ## Current status (done)
 - ✅ WiFi connect + station claim + periodic heartbeat
@@ -20,7 +20,7 @@ _Last updated: 2026-02-09 10:35 (GMT+6)_
   - Dual SPI: LCD on VSPI, RFID on HSPI
   - NVS persistence for token + station config
   - RGB LED + buzzer feedback per scan result
-  - QC station mode with touch PASS/FAIL buttons (coded, untested on hardware)
+  - QC station mode with touch PASS/FAIL buttons
 - ✅ RFID end-to-end test (2026-02-09)
   - Test station MAC: `A8:42:E3:32:A4:98`, mapped as L1-SW-01 / sewing
   - Test tag UID: `0B7D0610`
@@ -31,21 +31,20 @@ _Last updated: 2026-02-09 10:35 (GMT+6)_
   - Killed backend → scanned tags → events queued to NVS (queue size: 2)
   - Restarted backend → queue flushed automatically → events posted with 200 OK
   - No events lost; timestamps preserved from original scan time
+- ✅ QC station mode test (2026-02-09)
+  - Remapped station to `qc` type (L1-QC-01)
+  - Scan tag → PASS/FAIL touch buttons appeared on LCD
+  - Touch PASS → event posted as `QC_PASS` → 200 OK
+  - Touch FAIL → event posted as `QC_FAIL` → 200 OK
+  - Timeout not explicitly tested (10s no-touch auto-cancel)
 
 ## Next time (pick up here)
-### 1) QC station mode test
-- [ ] Map a station as `qc` type (or remap current station)
-- [ ] Scan tag → verify PASS/FAIL touch buttons appear on LCD
-- [ ] Touch PASS → event posted as `QC_PASS`
-- [ ] Touch FAIL → event posted as `QC_FAIL`
-- [ ] Timeout (10s no touch) → returns to READY without posting
-
-### 2) Lock buzzer frequency
+### 1) Lock buzzer frequency
 - [ ] Use current startup sweep to identify loudest/clearest frequency for the physical buzzer
 - [ ] Set a constant (e.g. `BUZZ_FREQ_HZ`) and remove/disable sweep for normal boot (optional)
 - [ ] Verify BUZ toggle uses the locked frequency
 
-### 3) LCD/UI polish
+### 2) LCD/UI polish
 - [ ] Only redraw when values change (reduce flicker)
 - [ ] Status bar: WiFi signal, station ID, time
 
