@@ -66,6 +66,40 @@ Errors:
 - `docs/ARCHITECTURE.md` — system architecture + diagrams
 - `docs/README_PRESENTATION.md` — quick presentation pack
 
+## Live Demo Simulation
+
+Continuous real-time simulation against a running backend — bundles flow through discovered stations with QC pass/fail/rework scenarios. Designed for CEO demos and Admin UI SSE feed testing.
+
+### Prerequisites
+
+```bash
+# 1. Start Postgres
+docker compose up -d
+
+# 2. Set up env (if not already)
+cp .env.example .env
+# Edit .env: set ADMIN_TOKEN, DATABASE_URL with port 5434
+
+# 3. Migrate + seed
+npm run migrate
+npm run seed
+
+# 4. Start backend
+npm run dev
+
+# 5. Ensure at least 2 mapped stations exist for SOUTHERNIOT-DEMO factory
+#    (claim via POST /api/v1/stations/claim, map via PATCH /api/v1/admin/stations/:id/map)
+```
+
+### Run
+
+```bash
+npm run simulate:demo                    # realistic pacing (30-60s per step)
+SIM_SPEED=fast npm run simulate:demo     # fast mode (5-10s per step)
+```
+
+The script auto-discovers mapped stations, re-claims for fresh tokens, builds a pipeline (e.g. `L1-SW-01 → L1-SW-02 → L1-FIN-01 → L1-QC-01`), and runs bundles through it continuously. Ctrl+C for clean shutdown with stats.
+
 ## Tests
 
 ```bash

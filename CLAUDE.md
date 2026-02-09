@@ -23,6 +23,8 @@ npm run seed           # Seed demo factory + lines
 
 # Simulation
 npm run simulate       # Simulate a full claim→bundle→events flow
+npm run simulate:demo  # Live demo: auto-discover stations, continuous bundle flow
+SIM_SPEED=fast npm run simulate:demo  # Fast mode (5-10s steps instead of 30-60s)
 ```
 
 ## Architecture
@@ -78,3 +80,14 @@ See `.env.example`. Key vars:
 - `CORS_ORIGIN` — optional, enables CORS when set
 
 Note: docker-compose maps Postgres to host port **5434**, so local DATABASE_URL should use port 5434 unless connecting directly to the container.
+
+### Live Demo Simulation (`scripts/simulateDemo.ts`)
+
+Continuous simulation against a running backend with real mapped stations. Used for CEO demos and Admin UI testing.
+
+- **Startup**: discovers mapped stations via admin API, re-claims for fresh tokens, builds pipeline ordered by type (cutting → sewing → finishing → qc)
+- **Bundle flow**: creates bundles with 7-byte RFID UIDs, flows through all stations with delays
+- **Scenarios**: 70% QC Pass, 20% QC Fail (with defect codes), 10% Rework (fail → re-sew → pass)
+- **Heartbeats**: background POST every 30s to keep `last_seen_at` fresh
+- **Speed**: `SIM_SPEED=realistic` (30-60s, default) or `SIM_SPEED=fast` (5-10s)
+- **Requires**: running backend, Postgres, `ADMIN_TOKEN` in `.env`, at least 2 mapped stations for `SEED_FACTORY_CODE`
