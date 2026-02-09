@@ -9,7 +9,8 @@ Start here for non-technical stakeholders.
 
 ## Architecture
 
-- **Architecture + diagrams (Mermaid):** `ARCHITECTURE.md`
+- **Architecture + contracts:** `ARCHITECTURE.md`
+- **All diagrams (Mermaid):** `DIAGRAMS.md` — system architecture, data flow, bundle state machine, station lifecycle, event ingest sequence, demo simulation flow, ER diagram, API route map
 
 ## Exports (ready for slides)
 
