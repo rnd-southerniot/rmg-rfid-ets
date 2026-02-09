@@ -1,6 +1,6 @@
 # Next steps (ETS / RFID)
 
-_Last updated: 2026-02-09 11:10 (GMT+6)_
+_Last updated: 2026-02-09 11:20 (GMT+6)_
 
 ## Current status (done)
 - ✅ WiFi connect + station claim + periodic heartbeat
@@ -46,12 +46,16 @@ _Last updated: 2026-02-09 11:10 (GMT+6)_
   - Screen tracking to skip redundant full redraws (no flicker on scan→ready transition)
   - Status bar on ready screen: WiFi status, station ID, HH:MM time (updates every 2s)
   - Moved scan prompt up to make room for status bar
+- ✅ OTA firmware updates (2026-02-09)
+  - ArduinoOTA with hostname `rfid-<MAC>` for network discovery
+  - LCD progress display during update
+  - LED feedback: blue=updating, green=done, red=error
+  - Usage: `pio run -t upload --upload-port <ESP32_IP>`
 
 ## Next time (pick up here)
 All core features are done. Remaining items are nice-to-haves:
 
 ## Later
 - [ ] UID cascade (7/10-byte) support if needed (MFRC522)
-- [ ] OTA firmware updates (ArduinoOTA)
 - [ ] Power-on self-test (LED, buzzer, RFID, LCD, WiFi)
 - [ ] Serial debug log levels
