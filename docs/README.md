@@ -2,6 +2,10 @@
 
 Start here for non-technical stakeholders.
 
+## Project Summary
+
+- **Full project overview:** `PROJECT_SUMMARY.md` — start here for a complete picture (system, API, schema, stack, roadmap, repo structure)
+
 ## CEO / Presentation
 
 - **CEO brief:** `CEO_BRIEF.md`
