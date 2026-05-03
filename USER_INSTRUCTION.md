@@ -30,8 +30,8 @@ Network: ESP32 must be on the same Wi-Fi LAN as the host running the backend.
 
 ```bash
 mkdir -p ~/Developer/projects/prod && cd ~/Developer/projects/prod
-gh repo clone rnd-southerniot/rmg-rfid-ets
-gh repo clone rnd-southerniot/rmg-rfid-station-fw
+git clone git@github.com:rnd-southerniot/rmg-rfid-ets.git
+git clone git@github.com:rnd-southerniot/rmg-rfid-station-fw.git
 ```
 
 ---
@@ -99,8 +99,8 @@ In a new terminal:
 
 ```bash
 cd rmg-rfid-ets/admin-ui
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 Expected: `VITE ... Local: http://localhost:5173/`. Open it in your browser.

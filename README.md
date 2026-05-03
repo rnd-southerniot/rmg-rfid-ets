@@ -11,9 +11,10 @@ cp .env.example .env
 # start Postgres (optional, for local dev)
 docker compose up -d
 
-npm run migrate
-npm run seed
-npm run dev
+pnpm i
+pnpm run migrate
+pnpm run seed
+pnpm run dev
 ```
 
 Health:
