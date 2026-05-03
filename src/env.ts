@@ -3,7 +3,9 @@ import { z } from 'zod';
 const EnvSchema = z.object({
   DATABASE_URL: z.string().min(1),
   PORT: z.coerce.number().int().positive().default(3000),
-  LOG_LEVEL: z.string().default('info')
+  LOG_LEVEL: z.string().default('info'),
+  JWT_SECRET: z.string().min(16),
+  LOGIN_RFID_UID: z.string().min(1)
 });
 
 export type Env = z.infer<typeof EnvSchema>;

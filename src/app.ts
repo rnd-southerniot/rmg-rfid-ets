@@ -12,10 +12,18 @@ import { adminEventsRouter } from './routes/adminEvents';
 import { stationStatusRouter } from './routes/stationStatus';
 import { adminBundlesRouter } from './routes/adminBundles';
 import { simulationRouter } from './routes/simulation';
+import { authRouter } from './routes/auth';
 
-export function createApp(opts: { db: Db; logLevel?: string }) {
+export function createApp(opts: {
+  db: Db;
+  logLevel?: string;
+  jwtSecret?: string;
+  loginRfidUid?: string;
+}) {
   const app = express();
   const logger = pino({ level: opts.logLevel ?? 'info' });
+  const jwtSecret = opts.jwtSecret ?? 'test-jwt-secret-default-do-not-use-in-prod';
+  const loginRfidUid = opts.loginRfidUid ?? 'TESTLOGINUID';
 
   app.use(pinoHttp({ logger }));
   app.use(corsFromEnv());
@@ -30,6 +38,7 @@ export function createApp(opts: { db: Db; logLevel?: string }) {
     }
   });
 
+  app.use('/api/v1/auth', authRouter(opts.db, { jwtSecret, loginRfidUid }));
   app.use('/api/v1/stations', stationsRouter(opts.db));
   app.use('/api/v1/station', stationStatusRouter(opts.db));
   app.use('/api/v1/events', eventsRouter(opts.db));

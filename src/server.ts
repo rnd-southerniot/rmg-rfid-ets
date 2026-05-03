@@ -10,7 +10,9 @@ const pool = createPgPool(env.DATABASE_URL);
 
 const app = createApp({
   db: pool,
-  logLevel: env.LOG_LEVEL
+  logLevel: env.LOG_LEVEL,
+  jwtSecret: env.JWT_SECRET,
+  loginRfidUid: env.LOGIN_RFID_UID
 });
 
 app.listen(env.PORT, () => {
