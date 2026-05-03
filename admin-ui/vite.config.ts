@@ -12,8 +12,8 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': 'http://localhost:3000',
-      '/health': 'http://localhost:3000',
+      '/api': 'http://localhost:3003',
+      '/health': 'http://localhost:3003',
     },
   },
 })
