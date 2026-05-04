@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createApp } from '../src/app';
 import { createTestDb } from './helpers/testDb';
 import { tokenHash } from '../src/ids';
+import { TEST_USER_TOKEN } from './helpers/auth';
 
 async function seedFactoryAndLine(db: any) {
   await db.query('INSERT INTO factories (id, name, code) VALUES ($1,$2,$3)', ['fac_1', 'Demo', 'SOUTHERNIOT-DEMO']);
@@ -49,7 +50,7 @@ describe('API acceptance (minimal)', () => {
     const app = createApp({ db: pool, logLevel: 'silent' });
     const res = await request(app)
       .post('/api/v1/events')
-      .set('Authorization', 'Bearer sttok_test')
+      .set('Authorization', 'Bearer sttok_test').set('X-User-Token', TEST_USER_TOKEN)
       .send({
         event_id: '01TEST',
         ts: '2026-02-05T11:04:00Z',
@@ -61,7 +62,7 @@ describe('API acceptance (minimal)', () => {
     expect(res.body).toEqual({ ok: false, error: 'station_unmapped' });
   });
 
-  it('POST /api/v1/events → unknown_bundle if RFID not registered', async () => {
+  it('POST /api/v1/events → registered when RFID has no bundle yet', async () => {
     await seedFactoryAndLine(pool);
 
     await pool.query(
@@ -72,7 +73,7 @@ describe('API acceptance (minimal)', () => {
     const app = createApp({ db: pool, logLevel: 'silent' });
     const res = await request(app)
       .post('/api/v1/events')
-      .set('Authorization', 'Bearer sttok_test')
+      .set('Authorization', 'Bearer sttok_test').set('X-User-Token', TEST_USER_TOKEN)
       .send({
         event_id: '01TEST',
         ts: '2026-02-05T11:04:00Z',
@@ -80,8 +81,13 @@ describe('API acceptance (minimal)', () => {
         event_type: 'COMPLETE'
       });
 
-    expect(res.status).toBe(404);
-    expect(res.body).toEqual({ ok: false, error: 'unknown_bundle' });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true, action: 'registered' });
+
+    const reg = await pool.query('SELECT rfid_uid, factory_id, scan_count FROM rfid_registry WHERE rfid_uid = $1', ['E2000017221101441890ABCD']);
+    expect(reg.rows.length).toBe(1);
+    expect(reg.rows[0].factory_id).toBe('fac_1');
+    expect(reg.rows[0].scan_count).toBe(1);
   });
 
   it('POST /api/v1/bundles normalizes lowercase rfid_uid to uppercase', async () => {
@@ -124,7 +130,7 @@ describe('API acceptance (minimal)', () => {
     const app = createApp({ db: pool, logLevel: 'silent' });
     const res = await request(app)
       .post('/api/v1/events')
-      .set('Authorization', 'Bearer sttok_test')
+      .set('Authorization', 'Bearer sttok_test').set('X-User-Token', TEST_USER_TOKEN)
       .send({
         event_id: '01NORM',
         ts: '2026-02-05T11:04:00Z',
@@ -164,7 +170,7 @@ describe('API acceptance (minimal)', () => {
     // Post event against that bundle
     const event = await request(app)
       .post('/api/v1/events')
-      .set('Authorization', 'Bearer sttok_test')
+      .set('Authorization', 'Bearer sttok_test').set('X-User-Token', TEST_USER_TOKEN)
       .send({
         event_id: '01SEVEN',
         ts: '2026-02-09T12:00:00Z',
@@ -217,8 +223,8 @@ describe('API acceptance (minimal)', () => {
       meta: { rssi: -55 }
     };
 
-    const r1 = await request(app).post('/api/v1/events').set('Authorization', 'Bearer sttok_test').send(payload);
-    const r2 = await request(app).post('/api/v1/events').set('Authorization', 'Bearer sttok_test').send(payload);
+    const r1 = await request(app).post('/api/v1/events').set('Authorization', 'Bearer sttok_test').set('X-User-Token', TEST_USER_TOKEN).send(payload);
+    const r2 = await request(app).post('/api/v1/events').set('Authorization', 'Bearer sttok_test').set('X-User-Token', TEST_USER_TOKEN).send(payload);
 
     expect(r1.status).toBe(200);
     expect(r2.status).toBe(200);

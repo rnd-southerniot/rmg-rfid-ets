@@ -18,12 +18,14 @@ export function createApp(opts: {
   db: Db;
   logLevel?: string;
   jwtSecret?: string;
-  loginRfidUid?: string;
+  loginRfidUids?: string[];
 }) {
   const app = express();
   const logger = pino({ level: opts.logLevel ?? 'info' });
   const jwtSecret = opts.jwtSecret ?? 'test-jwt-secret-default-do-not-use-in-prod';
-  const loginRfidUid = opts.loginRfidUid ?? 'TESTLOGINUID';
+  const loginRfidUids = opts.loginRfidUids?.length
+    ? opts.loginRfidUids
+    : ['TESTLOGINUID'];
 
   app.use(pinoHttp({ logger }));
   app.use(corsFromEnv());
@@ -38,10 +40,10 @@ export function createApp(opts: {
     }
   });
 
-  app.use('/api/v1/auth', authRouter(opts.db, { jwtSecret, loginRfidUid }));
+  app.use('/api/v1/auth', authRouter(opts.db, { jwtSecret, loginRfidUids }));
   app.use('/api/v1/stations', stationsRouter(opts.db));
   app.use('/api/v1/station', stationStatusRouter(opts.db));
-  app.use('/api/v1/events', eventsRouter(opts.db));
+  app.use('/api/v1/events', eventsRouter(opts.db, { jwtSecret, loginRfidUids }));
   app.use('/api/v1/bundles', bundlesRouter(opts.db));
   app.use('/api/v1/admin', adminRouter(opts.db));
   app.use('/api/v1/admin/events', adminEventsRouter(opts.db));

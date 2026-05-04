@@ -99,6 +99,34 @@ function stationHeaders(token: string): Record<string, string> {
   return { authorization: `Bearer ${token}` };
 }
 
+let userToken: string | null = null;
+
+async function loginUser(): Promise<string> {
+  const uid = process.env.LOGIN_RFID_UID;
+  if (!uid) {
+    console.error('LOGIN_RFID_UID is required in .env for simulation');
+    process.exit(1);
+  }
+  const res = await jfetch('/api/v1/auth/login', {
+    method: 'POST',
+    json: { rfid_uid: uid },
+  });
+  if (!res.token) {
+    throw new Error('login response missing token');
+  }
+  return res.token as string;
+}
+
+function eventHeaders(stationToken: string): Record<string, string> {
+  if (!userToken) {
+    throw new Error('userToken not initialized — call loginUser() first');
+  }
+  return {
+    authorization: `Bearer ${stationToken}`,
+    'x-user-token': userToken,
+  };
+}
+
 // ── Types ───────────────────────────────────────────────────────────────────
 
 interface MappedStation {
@@ -237,7 +265,7 @@ async function postEvent(
 
   await jfetch('/api/v1/events', {
     method: 'POST',
-    headers: stationHeaders(station.token),
+    headers: eventHeaders(station.token),
     json: {
       event_id: eventId,
       ts: new Date().toISOString(),
@@ -402,6 +430,10 @@ async function main() {
   process.on('SIGTERM', shutdown);
 
   console.log(`Connecting to ${API}...`);
+  console.log();
+
+  userToken = await loginUser();
+  console.log('Operator authenticated.');
   console.log();
 
   // 1. Discover mapped stations

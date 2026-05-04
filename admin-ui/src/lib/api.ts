@@ -1,6 +1,6 @@
 import type {
   Factory, Line, Station, Bundle, Event,
-  BulkCreateResponse,
+  BulkCreateResponse, RegisteredRfid,
 } from './types'
 
 class ApiError extends Error {
@@ -220,6 +220,20 @@ export async function fetchRecentEvents(
     token,
   )
   return data.events
+}
+
+export async function fetchRegisteredRfids(
+  token: string,
+  factoryCode: string,
+  opts: { unboundOnly?: boolean } = {},
+): Promise<RegisteredRfid[]> {
+  const params = new URLSearchParams({ factory_code: factoryCode })
+  if (opts.unboundOnly) params.set('unbound', 'true')
+  const data = await api<{ ok: boolean; rfids: RegisteredRfid[] }>(
+    `/api/v1/admin/rfids?${params.toString()}`,
+    token,
+  )
+  return data.rfids
 }
 
 export function eventStreamUrl(

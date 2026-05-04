@@ -13,6 +13,7 @@ import { BundlesPage } from '@/routes/bundles/index'
 import { BundleDetailPage } from '@/routes/bundles/detail'
 import { BundleCreatePage } from '@/routes/bundles/create'
 import { EventsPage } from '@/routes/events/index'
+import { RfidsPage } from '@/routes/rfids/index'
 import { SettingsPage } from '@/routes/settings/index'
 
 // Root route
@@ -80,6 +81,12 @@ const eventsRoute = createRoute({
   component: EventsPage,
 })
 
+const rfidsRoute = createRoute({
+  getParentRoute: () => authLayout,
+  path: '/rfids',
+  component: RfidsPage,
+})
+
 const settingsRoute = createRoute({
   getParentRoute: () => authLayout,
   path: '/settings',
@@ -95,6 +102,7 @@ const routeTree = rootRoute.addChildren([
     bundleCreateRoute,
     bundleDetailRoute,
     eventsRoute,
+    rfidsRoute,
     settingsRoute,
   ]),
 ])

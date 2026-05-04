@@ -74,6 +74,21 @@ export interface BulkCreateResult {
   error?: string
 }
 
+export interface RegisteredRfid {
+  rfid_uid: string
+  scan_count: number
+  first_seen_at: string
+  last_seen_at: string
+  bundle_id: string | null
+  bundle_order_id: string | null
+  bundle_style: string | null
+  bundle_color: string | null
+  bundle_size: string | null
+  bundle_status: BundleStatus | null
+  last_station_code: string | null
+  last_station_mac: string | null
+}
+
 export interface BulkCreateResponse {
   ok: boolean
   results: BulkCreateResult[]

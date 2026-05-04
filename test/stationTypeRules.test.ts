@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createApp } from '../src/app';
 import { createTestDb } from './helpers/testDb';
 import { tokenHash } from '../src/ids';
+import { TEST_USER_TOKEN } from './helpers/auth';
 
 async function seedFactoryLineAndBundle(db: any) {
   await db.query('INSERT INTO factories (id, name, code) VALUES ($1,$2,$3)', ['fac_1', 'Demo', 'SOUTHERNIOT-DEMO']);
@@ -33,7 +34,7 @@ describe('Station type vs event type rules', () => {
     const app = createApp({ db: pool, logLevel: 'silent' });
     const res = await request(app)
       .post('/api/v1/events')
-      .set('Authorization', 'Bearer sttok_test')
+      .set('Authorization', 'Bearer sttok_test').set('X-User-Token', TEST_USER_TOKEN)
       .send({
         event_id: '01TEST',
         ts: '2026-02-05T11:04:00Z',
@@ -56,7 +57,7 @@ describe('Station type vs event type rules', () => {
     const app = createApp({ db: pool, logLevel: 'silent' });
     const res = await request(app)
       .post('/api/v1/events')
-      .set('Authorization', 'Bearer sttok_test')
+      .set('Authorization', 'Bearer sttok_test').set('X-User-Token', TEST_USER_TOKEN)
       .send({
         event_id: '01TEST',
         ts: '2026-02-05T11:04:00Z',
@@ -79,7 +80,7 @@ describe('Station type vs event type rules', () => {
     const app = createApp({ db: pool, logLevel: 'silent' });
     const res = await request(app)
       .post('/api/v1/events')
-      .set('Authorization', 'Bearer sttok_test')
+      .set('Authorization', 'Bearer sttok_test').set('X-User-Token', TEST_USER_TOKEN)
       .send({
         event_id: '01TEST',
         ts: '2026-02-05T11:04:00Z',
@@ -89,6 +90,6 @@ describe('Station type vs event type rules', () => {
       });
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ ok: true });
+    expect(res.body).toEqual({ ok: true, action: 'recorded' });
   });
 });

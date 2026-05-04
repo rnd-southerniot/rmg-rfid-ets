@@ -8,9 +8,9 @@ const LoginSchema = z.object({
   rfid_uid: RfidUidSchema
 });
 
-export function authRouter(_db: Db, opts: { jwtSecret: string; loginRfidUid: string }) {
+export function authRouter(_db: Db, opts: { jwtSecret: string; loginRfidUids: string[] }) {
   const r = Router();
-  const allowedUid = opts.loginRfidUid.trim().toUpperCase();
+  const allowedUids = new Set(opts.loginRfidUids.map((s) => s.trim().toUpperCase()));
 
   r.post('/login', (req, res) => {
     const parsed = LoginSchema.safeParse(req.body);
@@ -19,7 +19,7 @@ export function authRouter(_db: Db, opts: { jwtSecret: string; loginRfidUid: str
     }
 
     const uid = parsed.data.rfid_uid;
-    if (uid !== allowedUid) {
+    if (!allowedUids.has(uid)) {
       return res.status(401).json({ ok: false, error: 'invalid_credentials' });
     }
 

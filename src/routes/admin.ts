@@ -188,5 +188,42 @@ export function adminRouter(db: Db) {
     return res.json({ ok: true, station: q.rows[0] });
   });
 
+  // Registered RFIDs (taps from /events that did not match a bundle)
+  r.get('/rfids', async (req, res) => {
+    const factoryCode = String(req.query.factory_code ?? '').trim();
+    if (!factoryCode) return res.status(400).json({ ok: false, error: 'invalid_request', details: { factory_code: 'required' } });
+
+    const f = await db.query('SELECT id FROM factories WHERE code = $1 LIMIT 1', [factoryCode]);
+    const factoryId = f.rows[0]?.id;
+    if (!factoryId) return res.status(400).json({ ok: false, error: 'unknown_factory' });
+
+    const onlyUnbound = String(req.query.unbound ?? '').toLowerCase() === 'true';
+
+    const q = await db.query(
+      `SELECT
+         r.rfid_uid,
+         r.scan_count,
+         r.first_seen_at,
+         r.last_seen_at,
+         r.bundle_id,
+         b.order_id   AS bundle_order_id,
+         b.style      AS bundle_style,
+         b.color      AS bundle_color,
+         b.size       AS bundle_size,
+         b.status     AS bundle_status,
+         s.station_id AS last_station_code,
+         s.mac        AS last_station_mac
+       FROM rfid_registry r
+       LEFT JOIN bundles  b ON b.id = r.bundle_id
+       LEFT JOIN stations s ON s.id = r.last_station_id
+       WHERE r.factory_id = $1
+         ${onlyUnbound ? 'AND r.bundle_id IS NULL' : ''}
+       ORDER BY r.last_seen_at DESC`,
+      [factoryId]
+    );
+
+    return res.json({ ok: true, rfids: q.rows });
+  });
+
   return r;
 }

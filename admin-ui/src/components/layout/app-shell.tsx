@@ -1,6 +1,6 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import {
-  Radio, Package, Activity, Settings, LogOut, ChevronDown, Factory,
+  Radio, Package, Activity, Settings, LogOut, ChevronDown, Factory, ScanLine,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { to: '/' as const, label: 'Dashboard', icon: Factory },
   { to: '/stations' as const, label: 'Stations', icon: Radio },
   { to: '/bundles' as const, label: 'Bundles', icon: Package },
+  { to: '/rfids' as const, label: 'Registered RFIDs', icon: ScanLine },
   { to: '/events' as const, label: 'Live Events', icon: Activity },
   { to: '/settings' as const, label: 'Settings', icon: Settings },
 ]

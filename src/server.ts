@@ -12,7 +12,7 @@ const app = createApp({
   db: pool,
   logLevel: env.LOG_LEVEL,
   jwtSecret: env.JWT_SECRET,
-  loginRfidUid: env.LOGIN_RFID_UID
+  loginRfidUids: env.LOGIN_RFID_UIDS.split(',').map((s) => s.trim()).filter(Boolean)
 });
 
 app.listen(env.PORT, () => {
